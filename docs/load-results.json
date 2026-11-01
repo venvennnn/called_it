@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-11-01T18:40:12.060Z",
+  "source": "Synthetic replay; never live audience",
+  "hardware": {
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpus": 5,
+    "memoryGiB": 33
+  },
+  "target": "50 messages/s for 10s, 200 messages/s for 2s; each message delivered twice",
+  "messages": 900,
+  "accepted": 900,
+  "effectiveAccounts": 100,
+  "durationMs": 12010,
+  "processingMs": {
+    "p50": 0.20082900000033987,
+    "p95": 0.4866629999996803,
+    "max": 3.995002999999997
+  },
+  "rssMiB": 86,
+  "limitations": "Local SQLite processing latency, not end-to-end Twitch network latency; short engineering smoke, not a long-duration soak."
+}
