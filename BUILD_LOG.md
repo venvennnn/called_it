@@ -27,3 +27,8 @@ The implementation uses documented JSON-backed round documents rather than every
 
 ## Environment
 The provided command sandbox blocks network/listening sockets. Package installation and runtime/browser tests worked through the normal configured proxy outside that command sandbox; TLS verification remained enabled. Playwright's browser download was policy-denied, so tests used the existing `/usr/bin/chromium`. Network draft includes Twitch service hosts and browser distribution hosts; a saved draft does not apply/publish runtime policy or prove EventSub reachability.
+
+## Purple gaming-theme UI revision · 2 November 2026
+Restyled the director and all navigation pages to match the supplied purple/white gaming reference: bold sans-serif typography, dark sidebar, angular graphic labels, illustrated confidence ticket, numbered call/lock/prove steps, and a newly generated transparent anime streamer mascot. All state-aware OBS layouts now share the purple frame, chat-check brand, diagonal accents and mint/lilac forecast bar. Decorative hero call/score examples remain explicitly illustrative. Theme overrides are isolated in `apps/web/src/theme.css`; state and scoring logic are unchanged.
+
+Verified production build, formatting/type checks, both existing browser workflows, mobile overflow check, and an actual transparent 1920×1080 OBS-route screenshot (body background rgba(0, 0, 0, 0)). Visually reviewed desktop, mobile, and overlay renders.

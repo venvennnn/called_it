@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { score, type Round } from "../../../packages/shared/src/index.ts";
 import "./style.css";
+import "./theme.css";
 type R = Round & { participantCount: number; distribution: any };
 type Snapshot = {
   sessionId: string;
@@ -400,6 +401,77 @@ function App() {
         <main>
           {page === "Live room" ? (
             <>
+              <section
+                className="campaign-hero"
+                aria-label="Called It introduction"
+              >
+                <div className="campaign-copy">
+                  <span className="graphic-label">THE CONFIDENCE GAME</span>
+                  <h2>
+                    Chat talks big.
+                    <br />
+                    <em>Make it count.</em>
+                  </h2>
+                  <p>
+                    Turn the next stream moment into a confidence challenge.
+                    Call it in chat. Lock it before the action. See who got it
+                    right.
+                  </p>
+                  <div className="campaign-actions">
+                    <a className="primary" href="/auth/twitch">
+                      <Radio size={16} /> Connect Twitch
+                    </a>
+                    <button
+                      className="secondary-button"
+                      onClick={() => setModal("scoring")}
+                    >
+                      How it works <ArrowUpRight size={15} />
+                    </button>
+                  </div>
+                  <div className="campaign-steps">
+                    <span>
+                      <b>01</b> Call it
+                    </span>
+                    <ChevronRight size={14} />
+                    <span>
+                      <b>02</b> Lock it
+                    </span>
+                    <ChevronRight size={14} />
+                    <span>
+                      <b>03</b> Prove it
+                    </span>
+                  </div>
+                </div>
+                <div className="campaign-art" aria-hidden="true">
+                  <div className="hero-speedlines" />
+                  <span className="hero-spark">✣</span>
+                  <div className="hero-call-ticket">
+                    <span>ROUND {r?.id || "01"}</span>
+                    <div>
+                      <strong>YES</strong>
+                      <b>
+                        80<small>%</small>
+                      </b>
+                    </div>
+                    <p>CONFIDENCE ON THE RECORD</p>
+                  </div>
+                  <img className="hero-mascot" src="/mascot.png" alt="" />
+                  <div className="hero-score-sticker">
+                    <CheckCheck size={23} />
+                    <span>
+                      YES result <b>· 96 points</b>
+                    </span>
+                  </div>
+                  <span className="hero-art-label">
+                    ILLUSTRATIVE CALL · DEMO
+                  </span>
+                </div>
+              </section>
+              <div className="dashboard-section-label">
+                <span>STREAMER DASHBOARD</span>
+                <i />
+                <b>{data.mode.toUpperCase()} MODE</b>
+              </div>
               <div className="room-grid">
                 <section className="stage-column">
                   <div className="eyebrow">
@@ -1439,6 +1511,12 @@ function OverlayCard({
           </>
         )}
       </div>
+      <img
+        className="overlay-mascot"
+        src="/mascot.png"
+        alt=""
+        aria-hidden="true"
+      />
       <div className="overlay-mode">
         <i />
         {data.mode.toUpperCase()}{" "}
