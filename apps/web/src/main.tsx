@@ -36,6 +36,7 @@ import "./style.css";
 import "./theme.css";
 type R = Round & { participantCount: number; distribution: any };
 type Snapshot = {
+  demoMultipleVotes: boolean;
   sessionId: string;
   sessions: { id: string; name: string }[];
   mode: string;
@@ -640,8 +641,10 @@ function App() {
                     </div>
                   </div>
                   <div className="stage-footnote">
-                    <ShieldCheck size={14} /> One viewer, one effective
-                    forecast. Confidence makes it interesting.
+                    <ShieldCheck size={14} />{" "}
+                    {data.demoMultipleVotes
+                      ? "Demo testing · Every sandbox message adds a vote."
+                      : "One viewer, one effective forecast. Confidence makes it interesting."}
                   </div>
                 </section>
                 <aside className="operator-panel">
@@ -837,9 +840,13 @@ function App() {
                         <p>
                           <b>Confirm only after the attempt ends.</b>
                           <span>
-                            Each viewer has one effective forecast.
+                            {r.calls.some((c) => c.separateVote)
+                              ? "Includes separate demo test votes."
+                              : "Each viewer has one effective forecast."}
                             <br />
-                            Replacements do not add weight.
+                            {r.calls.some((c) => c.separateVote)
+                              ? "Test messages contribute to scores and the crowd forecast."
+                              : "Replacements do not add weight."}
                           </span>
                         </p>
                       </div>
@@ -897,6 +904,7 @@ function App() {
                 </aside>
               </div>
               <Series rounds={rounds} />
+              {r && <DistributionChart round={r} />}
               <div className="below-stage">
                 <div>
                   <span className="eyebrow">THE QUESTION ON RECORD</span>
@@ -1015,7 +1023,7 @@ function App() {
                           <b>Score</b>
                         </div>
                         {round.locked.slice(0, 10).map((c) => (
-                          <div key={c.userId}>
+                          <div key={c.messageId}>
                             <span>{c.name}</span>
                             <span>{c.p}%</span>
                             <span>
@@ -1206,6 +1214,16 @@ function App() {
               {data.mode === "Demo" && (
                 <DemoConsole
                   round={r}
+                  multipleVotes={data.demoMultipleVotes}
+                  busy={busy}
+                  onToggle={async (multipleVotes) => {
+                    await perform("demo/settings", { multipleVotes });
+                    flash(
+                      multipleVotes
+                        ? "Testing mode: every new message adds a vote."
+                        : "New calls now replace the viewer’s normal forecast.",
+                    );
+                  }}
                   onSubmit={async (text, name) => {
                     const res = await perform("demo/call", { text, name });
                     flash(
@@ -1383,6 +1401,101 @@ function time(t: number | null | undefined) {
       })
     : "—";
 }
+function DistributionChart({ round }: { round: R }) {
+  const d = round.distribution as {
+    count: number;
+    mean: number | null;
+    median: number | null;
+    bins: number[];
+  } | null;
+  const max = Math.max(1, ...(d?.bins || []));
+  return (
+    <section
+      className="forecast-distribution"
+      aria-label="Forecast distribution"
+    >
+      <div className="distribution-heading">
+        <div>
+          <span className="eyebrow">HOW THE ROOM SEES IT</span>
+          <h3>Forecast distribution</h3>
+        </div>
+        <span className="distribution-total">
+          {d ? `${d.count} votes` : "Hidden until lock"}
+        </span>
+      </div>
+      {!d ? (
+        <p className="distribution-empty">
+          Calls are private while this round is open. The distribution appears
+          when calls lock.
+        </p>
+      ) : !d.count ? (
+        <p className="distribution-empty">
+          No votes yet. Each call will appear in its probability bucket.
+        </p>
+      ) : (
+        <>
+          <div className="distribution-summary">
+            <span>
+              Crowd average <b>{d.mean!.toFixed(0)}% Yes</b>
+            </span>
+            <span>
+              Median <b>{d.median!.toFixed(0)}% Yes</b>
+            </span>
+          </div>
+          <div className="distribution-plot">
+            <div className="distribution-grid" aria-hidden="true">
+              <span>{max}</span>
+              <span>{Math.round(max / 2)}</span>
+              <span>0</span>
+            </div>
+            <div className="distribution-columns">
+              {d.bins.map((n, i) => {
+                const label = `${i * 10}–${i === 9 ? 100 : i * 10 + 9}% Yes: ${n} ${n === 1 ? "vote" : "votes"} (${Math.round((n / d.count) * 100)}%)`;
+                return (
+                  <div
+                    className={
+                      "distribution-column " +
+                      (i < 5 ? "leans-no" : "leans-yes")
+                    }
+                    key={i}
+                  >
+                    <div className="distribution-column-track">
+                      <div
+                        className="distribution-column-bar"
+                        style={{ height: `${(n / max) * 100}%` }}
+                        tabIndex={0}
+                        role="img"
+                        aria-label={label}
+                      >
+                        <span className="distribution-tooltip">{label}</span>
+                        {n > 0 && <b>{n}</b>}
+                      </div>
+                    </div>
+                    <small>{i * 10}</small>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="distribution-axis">
+            <span>← Strong No</span>
+            <span>Chance of Yes (%)</span>
+            <span>Strong Yes → 100</span>
+          </div>
+          <p className="distribution-caption">
+            Bar height shows vote count. Each bucket spans 10 percentage points;
+            the last includes 100%.
+          </p>
+        </>
+      )}
+      {round.calls.some((c) => c.separateVote) && (
+        <p className="demo-testing-note">
+          Includes separate demo test votes from repeated viewers.
+        </p>
+      )}
+    </section>
+  );
+}
 function OverlayCard({
   data,
   round: r,
@@ -1458,7 +1571,12 @@ function OverlayCard({
               <small>seconds to call it</small>
             </div>
             <code>!call {r.id} yes 80</code>
-            <p>{r.participantCount} forecasts · One call per viewer</p>
+            <p>
+              {r.participantCount} forecasts ·{" "}
+              {data.demoMultipleVotes
+                ? "Demo multiple-vote testing"
+                : "One call per viewer"}
+            </p>
           </>
         ) : done ? (
           <>
@@ -1497,17 +1615,7 @@ function OverlayCard({
               </b>
             </div>
             <p>{r.locked.length} forecasts · Locked before play</p>
-            {large && r.distribution && (
-              <div className="distribution-bars">
-                {r.distribution.bins.map((n: number, i: number) => (
-                  <span
-                    key={i}
-                    style={{ height: `${10 + n * 4}px` }}
-                    title={`${i * 10}–${i * 10 + 10}%: ${n} calls`}
-                  />
-                ))}
-              </div>
-            )}
+            {large && <DistributionChart round={r} />}
           </>
         )}
       </div>
@@ -2013,9 +2121,15 @@ function ConfirmRound({
   );
 }
 function DemoConsole({
+  multipleVotes,
+  busy,
+  onToggle,
   round,
   onSubmit,
 }: {
+  multipleVotes: boolean;
+  busy: boolean;
+  onToggle: (enabled: boolean) => Promise<void>;
   round: R | null | undefined;
   onSubmit: (text: string, name: string) => Promise<void>;
 }) {
@@ -2025,6 +2139,28 @@ function DemoConsole({
     <section className="demo-console">
       <span className="eyebrow">DEMO SANDBOX · SYNTHETIC INPUT</span>
       <h2>Try a call without Twitch.</h2>
+      <label className="demo-vote-toggle">
+        <span>
+          <b>Count every message as a separate vote</b>
+          <small>
+            Demo testing only · Applies to new sandbox calls. Existing votes
+            stay on record. !uncall withdraws all your votes.
+          </small>
+        </span>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={multipleVotes}
+          disabled={busy}
+          onChange={(e) => onToggle(e.target.checked).catch(() => {})}
+        />
+      </label>
+      {multipleVotes && (
+        <p className="demo-testing-note">
+          Multiple-vote testing is on. Reuse the same display name to add votes
+          and fill the distribution. Scores include these test votes.
+        </p>
+      )}
       <p>
         Publish an open round first. These messages use the same parser and
         persistence pipeline as chat.

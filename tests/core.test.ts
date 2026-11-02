@@ -273,3 +273,44 @@ test("new sessions preserve archives and require finishing active rounds", () =>
     f.close();
   }
 });
+
+test("separate demo votes retain message identity, deduplication, moderation and withdrawal", () => {
+  const f = fixture();
+  try {
+    const r = f.store.create(input);
+    const send = (id: string, p: number, separateVote = true) =>
+      f.store.ingest({
+        id,
+        text: `!call ${r.id} yes ${p}`,
+        name: "Tester",
+        userId: "tester",
+        sourceAt: Date.now(),
+        separateVote,
+      });
+    assert.equal(send("first", 60), true);
+    assert.equal(send("second", 90), true);
+    assert.equal(send("second", 90), false);
+    assert.equal(f.store.get(r.id)!.calls.length, 2);
+    assert.equal(aggregate(f.store.get(r.id)!.calls).mean, 75);
+    f.store.moderate(undefined, "second");
+    assert.equal(f.store.get(r.id)!.calls.length, 1);
+    send("normal", 70, false);
+    send("replacement", 80, false);
+    assert.equal(f.store.get(r.id)!.calls.length, 2);
+    assert.equal(f.store.get(r.id)!.calls.find((c) => !c.separateVote)!.p, 80);
+    f.store.ingest({
+      id: "withdraw",
+      text: `!uncall ${r.id}`,
+      name: "Tester",
+      userId: "tester",
+      sourceAt: Date.now(),
+    });
+    assert.equal(f.store.get(r.id)!.calls.filter((c) => !c.deleted).length, 0);
+    send("third", 100);
+    f.store.lock(r.id);
+    assert.equal(f.store.get(r.id)!.locked.length, 1);
+    assert.equal(f.store.get(r.id)!.crowd, 100);
+  } finally {
+    f.close();
+  }
+});

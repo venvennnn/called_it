@@ -1481,3 +1481,190 @@ footer {
     height: 12px;
   }
 }
+
+/* Probability histogram shared by the director and forecast overlay. */
+.forecast-distribution {
+  margin: 20px 0;
+  padding: 24px;
+  border: 1px solid #dce7e2;
+  border-radius: 18px;
+  background: #fff;
+  color: #173c35;
+  min-width: 0;
+}
+.distribution-heading,
+.distribution-summary,
+.distribution-axis {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.distribution-heading h3 {
+  margin: 5px 0 0;
+  font-size: 20px;
+}
+.distribution-heading .eyebrow {
+  font-size: 10px;
+}
+.distribution-total {
+  background: #eaf4ef;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.distribution-summary {
+  justify-content: flex-start;
+  gap: 28px;
+  margin: 20px 0 28px;
+  font-size: 12px;
+  color: #637c73;
+}
+.distribution-summary b {
+  display: block;
+  font-size: 19px;
+  color: #173c35;
+  margin-top: 4px;
+}
+.distribution-plot {
+  position: relative;
+  padding-left: 28px;
+}
+.distribution-grid {
+  position: absolute;
+  inset: 0 0 20px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #70867f;
+}
+.distribution-grid span {
+  border-bottom: 1px dashed #dce7e2;
+}
+.distribution-columns {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 8px;
+}
+.distribution-column-track {
+  height: 132px;
+  display: flex;
+  align-items: flex-end;
+}
+.distribution-column-bar {
+  position: relative;
+  width: 100%;
+  background: #b67b58;
+  border-radius: 5px 5px 0 0;
+  min-height: 2px;
+  transition: height 0.25s ease;
+  outline-offset: 3px;
+}
+.leans-yes .distribution-column-bar {
+  background: #16886b;
+}
+.distribution-column-bar b {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+}
+.distribution-column small {
+  display: block;
+  text-align: center;
+  margin-top: 7px;
+  font-size: 10px;
+  color: #637c73;
+}
+.distribution-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 5;
+  bottom: calc(100% + 24px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #173c35;
+  color: white;
+  font-size: 11px;
+  text-align: center;
+  box-shadow: 0 4px 12px #0002;
+}
+.distribution-column-bar:hover .distribution-tooltip,
+.distribution-column-bar:focus .distribution-tooltip {
+  display: block;
+}
+.distribution-axis {
+  margin: 12px 0;
+  font-size: 11px;
+  color: #637c73;
+}
+.distribution-caption,
+.distribution-empty {
+  color: #637c73;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.demo-vote-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px;
+  margin: 18px 0;
+  background: #edf5f0;
+  border: 1px solid #c9ded2;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.demo-vote-toggle small {
+  display: block;
+  font-size: 12px;
+  margin-top: 6px;
+  line-height: 1.5;
+  color: #526e62;
+}
+.demo-vote-toggle input {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  accent-color: #16886b;
+}
+.demo-testing-note {
+  padding: 10px 12px;
+  background: #fff3de;
+  color: #76551c;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 520px) {
+  .forecast-distribution {
+    padding: 16px;
+  }
+  .distribution-heading h3 {
+    font-size: 16px;
+  }
+  .distribution-columns {
+    gap: 4px;
+  }
+  .distribution-axis {
+    font-size: 9px;
+    gap: 6px;
+  }
+  .distribution-heading {
+    align-items: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .distribution-column-bar {
+    transition: none;
+  }
+}

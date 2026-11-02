@@ -15,6 +15,11 @@ Open the Vite address shown in the terminal (default port 5173). The API runs on
 
 No credentials are needed for Demo. Resolve the current round, create a question, and use **Settings → Demo sandbox** to submit `!call <round> no 80`. Lock, confirm No, and find the exact score **96** in History. One process owns the SQLite database. Data persists across restarts; refreshing never reopens a locked round.
 
+### Demo testing: multiple votes
+In **Settings → Demo sandbox**, enable **Count every message as a separate vote** to add multiple votes with the same display name. This Demo-only switch defaults off and persists across refreshes. It affects new sandbox messages; previous test votes remain when switched off. `!uncall <round>` withdraws all that viewer’s open votes. Test votes contribute to the distribution and scores. Live Twitch calls keep one effective forecast per account.
+
+The live room now shows a probability histogram with vote counts, crowd average, median, and keyboard/hover bucket details. To watch it fill during an open round, enable **Show distribution while calls are open** when creating the question; otherwise it appears at lock.
+
 ### macOS / Linux
 Install Node 24 from nodejs.org or your existing version manager (`nvm install && nvm use` with nvm), then run the commands above. To configure live mode: `cp .env.example .env`, edit locally, and follow [TWITCH_SETUP.md](TWITCH_SETUP.md).
 

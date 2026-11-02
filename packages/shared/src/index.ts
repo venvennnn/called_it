@@ -17,6 +17,7 @@ export type Call = {
   arrivalAt: number;
   seq: number;
   deleted?: boolean;
+  separateVote?: boolean;
 };
 export type Round = {
   sessionId?: string;

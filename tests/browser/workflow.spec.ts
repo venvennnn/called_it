@@ -147,3 +147,80 @@ test("rejects OAuth/CSRF/version conflicts and makes owner resolution idempotent
   expect(unauthorized.status()).toBe(401);
   await ctx.close();
 });
+
+test("demo multiple-vote toggle persists and fills the distribution", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Demo preview" }),
+  ).toBeVisible();
+  const headers = {
+    "X-Called-It": "owner",
+    Origin: "http://localhost:5174",
+    "Idempotency-Key": "multiple-vote-round",
+  };
+  const response = await page.request.post("/api/rounds/create", {
+    headers,
+    data: {
+      question: "Will repeated demo votes count?",
+      criterion: "Each message counts when enabled.",
+      duration: 300,
+      publicDistribution: true,
+    },
+  });
+  expect(response.ok()).toBe(true);
+  const round = await response.json();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  const toggle = page.getByRole("switch", { name: /Count every message/ });
+  await expect(toggle).not.toBeChecked();
+  await toggle.check();
+  await expect(toggle).toBeChecked();
+  await page.reload();
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await expect(toggle).toBeChecked();
+  for (const confidence of [60, 90]) {
+    await page
+      .getByLabel("Chat command")
+      .fill(`!call ${round.id} yes ${confidence}`);
+    await page.getByRole("button", { name: "Send demo call" }).click();
+    await expect(page.getByRole("status")).toContainText("Demo call accepted");
+  }
+  let state = await (await page.request.get("/api/state")).json();
+  expect(state.current.participantCount).toBe(2);
+  await toggle.uncheck();
+  await expect(toggle).not.toBeChecked();
+  for (const confidence of [70, 80]) {
+    const call = await page.request.post("/api/demo/call", {
+      headers,
+      data: { name: "Normal", text: `!call ${round.id} yes ${confidence}` },
+    });
+    expect((await call.json()).accepted).toBe(true);
+  }
+  state = await (await page.request.get("/api/state")).json();
+  expect(state.current.participantCount).toBe(3);
+  await page.getByRole("button", { name: "Live room", exact: true }).click();
+  const chart = page
+    .getByRole("region", { name: "Forecast distribution" })
+    .first();
+  await expect(chart).toContainText("3 votes");
+  await expect(
+    chart.getByRole("img", { name: /90–100% Yes: 1 vote/ }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: "/tmp/called-it-distribution-mobile.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await chart.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: "/tmp/called-it-distribution.png",
+    fullPage: true,
+  });
+});

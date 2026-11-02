@@ -123,6 +123,7 @@ export class Store {
     name: string;
     sourceAt: number;
     arrivalAt?: number;
+    separateVote?: boolean;
   }) {
     return this.transaction(() => {
       if (
@@ -158,14 +159,18 @@ export class Store {
           }
         ).n,
       );
-      const old = r.calls.find((c) => c.userId === message.userId);
+      const old = r.calls.find(
+        (c) => c.userId === message.userId && !c.separateVote,
+      );
       if (
+        !message.separateVote &&
         old &&
         (old.sourceAt > message.sourceAt ||
           (old.sourceAt === message.sourceAt && old.seq >= seq))
       )
         return false;
       const call: Call = {
+        separateVote: message.separateVote,
         userId: message.userId,
         name: message.name,
         p: command.kind === "call" ? command.p : 50,
@@ -177,7 +182,11 @@ export class Store {
         seq,
         deleted: command.kind === "uncall",
       };
-      r.calls = r.calls.filter((c) => c.userId !== call.userId);
+      r.calls = r.calls.filter(
+        (c) =>
+          c.userId !== call.userId ||
+          (command.kind === "call" && (message.separateVote || c.separateVote)),
+      );
       r.calls.push(call);
       this.save(r);
       return true;
@@ -227,8 +236,13 @@ export class Store {
               m.arrivalAt >= r.deadline
             )
               continue;
-            r.calls = r.calls.filter((x) => x.userId !== m.userId);
+            r.calls = r.calls.filter(
+              (x) =>
+                x.userId !== m.userId ||
+                (c.kind === "call" && (m.separateVote || x.separateVote)),
+            );
             r.calls.push({
+              separateVote: m.separateVote,
               userId: m.userId,
               name: m.name,
               p: c.kind === "call" ? c.p : 50,

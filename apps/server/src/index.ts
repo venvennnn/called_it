@@ -114,6 +114,7 @@ function snapshot(isOwner: boolean) {
     schemaVersion: 1,
     sessionId,
     sessions: isOwner ? store.sessions() : [],
+    demoMultipleVotes: !live && store.setting("demoMultipleVotes") === "true",
     mode: live ? "Live" : "Demo",
     channel: twitch.name || "Broadcast Director",
     connection: twitch.status,
@@ -362,6 +363,15 @@ app.post("/api/rounds/:id/:action", async (req) => {
   broadcast();
   return result;
 });
+app.post("/api/demo/settings", async (req) => {
+  if (live) throw Error("Demo settings are disabled in live mode.");
+  const { multipleVotes } = z
+    .object({ multipleVotes: z.boolean() })
+    .parse(req.body);
+  store.setting("demoMultipleVotes", String(multipleVotes));
+  broadcast();
+  return { ok: true };
+});
 app.post("/api/demo/call", async (req) => {
   if (live) throw Error("Synthetic calls are disabled in live mode.");
   const b = z
@@ -372,6 +382,7 @@ app.post("/api/demo/call", async (req) => {
     text: b.text,
     name: b.name,
     userId: "demo-input-" + b.name.toLowerCase(),
+    separateVote: store.setting("demoMultipleVotes") === "true",
     sourceAt: Date.now(),
   });
   broadcast();
